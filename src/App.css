@@ -1,0 +1,18 @@
+:root {
+  --border-radius: 25px;
+  --filter-border-radius: 3px;
+  --primary-color: rgb(0, 120, 210);
+  --light-grey: rgb(245, 245, 245);
+}
+
+body {
+  background-color: #DAE0E6 !important;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.hoverable:hover {
+  cursor: pointer;
+}
