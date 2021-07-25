@@ -18,6 +18,7 @@ import ReorderOutlinedIcon from '@material-ui/icons/ReorderOutlined';
 
 
 import "./mainBar.css";
+import LoadingOverlay from 'react-loading-overlay'
 
 
 class mainComponent extends Component {
@@ -28,14 +29,46 @@ class mainComponent extends Component {
       loading: false,
       page: 0,
       currentView:'card',
+      currentSortValue:'top',
       prevY: 0
     };
     this.handler = this.handler.bind(this)
+    this.upvote = this.upvote.bind(this)
+    this.downvote = this.downvote.bind(this)
+  }
+  upvote(post, index)
+  {
+    if(index != null)
+    {
+      let p = post.data
+      let number = post.data.ups
+        number++;
+        let data = [ ...this.state.posts ];
+        p.ups = number
+        data[index] = {...data[index], data: p};
+        this.setState({posts:data});  
+
+    }
+  }
+  downvote(post, index)
+  {
+    if(index != null)
+    {
+      let p = post.data
+      let number = post.data.ups
+      if(number > 0)
+      {
+        number--;
+        let data = [ ...this.state.posts ];
+        p.ups = number
+        data[index] = {...data[index], data: p};
+        this.setState({posts:data});
+      }
+    }
   }
   handler(data, index) {
     if(index != null)
     {
-      console.log(this.state.posts[index].showData)
 
       let toggle = '1';
 
@@ -48,23 +81,38 @@ class mainComponent extends Component {
       data[index] = {...data[index], showData: toggle};
       this.setState({posts:data});
       this.forceUpdate()
-        console.log(this.state.posts[index])
+        //console.log(this.state.posts[index])
       }
   }
-  getPosts(after) {
+  async getPosts(url) {
+    console.log("url" + url)
     this.setState({ loading: true });
-    axios
-      .get(
-        `https://www.reddit.com/r/makeup.json?limit=100&after=${after}`
-      )
+    await axios
+      .get(url)
       .then(res => {
-        console.log(res.data.data.children)
-        this.setState({ posts: [...this.state.posts, ...res.data.data.children] });
+        //this.setState({ posts: [...this.state.posts, ...res.data.data.children] });
+
+        this.setState({ posts: [] }, () => this.setState({ posts: res.data.data.children }))
+
         this.setState({ loading: false });
       });
   }
   componentDidMount() {
-    this.getPosts(this.state.page);
+    let url = `https://www.reddit.com/r/makeup.json?limit=100`;
+    if(this.state.currentSortValue == 'hot')
+    {
+        url= `https://www.reddit.com/r/makeup/hot.json?limit=100`;
+    }
+    else if(this.state.currentSortValue == 'new')
+    {
+      url= `https://www.reddit.com/r/makeup/new.json?limit=100`;
+    }
+    else if(this.state.currentSortValue == 'top')
+    {
+      url= `https://www.reddit.com/r/makeup/top.json?limit=100`;
+    }
+   
+    this.getPosts(url);
 
     var options = {
       root: null,
@@ -80,13 +128,27 @@ class mainComponent extends Component {
   }
   handleObserver(entities, observer) {
     const y = entities[0].boundingClientRect.y;
-    console.log(this.state.prevY)
 
     if (this.state.prevY > y) 
     {
       const lastPost = this.state.posts[this.state.posts.length - 1];
       const curPage = lastPost ? lastPost.data.name : null;
-      this.getPosts(curPage);
+      let url = `https://www.reddit.com/r/makeup.json?limit=100&after=${curPage}`
+      if(this.state.currentSortValue == 'hot')
+      {
+          url= `https://www.reddit.com/r/makeup/hot.json?limit=100&after=${curPage}`;
+      }
+      else if(this.state.currentSortValue == 'new')
+      {
+        url= `https://www.reddit.com/r/makeup/new.json?limit=100&after=${curPage}`;
+      }
+      else if(this.state.currentSortValue == 'top')
+      {
+        url= `https://www.reddit.com/r/makeup/top.json?limit=100&after=${curPage}`;
+      }
+   
+      
+      this.getPosts(url);
       this.setState({ page: curPage });
     }
     this.setState({ prevY: y });
@@ -102,8 +164,31 @@ class mainComponent extends Component {
         // setcurrentView("classic");
     this.setState({ currentView: 'classic' });
   }
-  render() {
+  clickOnBtn(action)
+  {
+    this.setState({ currentSortValue: action });
 
+    let url = null;
+    if(action == 'hot')
+    {
+        url= `https://www.reddit.com/r/makeup/hot.json?limit=100`;
+    }
+    else if(action == 'new')
+    {
+      url= `https://www.reddit.com/r/makeup/new.json?limit=100`;
+    }
+    else if(action == 'top')
+    {
+      url= `https://www.reddit.com/r/makeup/top.json?limit=100`;
+    }
+    
+    if(url != null)
+    {
+      this.getPosts(url);
+    }
+
+  }
+  render() {
     // Additional css
     const loadingCSS = {
       height: "100px",
@@ -116,15 +201,15 @@ class mainComponent extends Component {
     return (
       <div className="main-bar">
         <div className="filter-container">
-          <div className="filter-element hoverable">
+          <div className="filter-element hoverable" onClick={()=>this.clickOnBtn('hot')}>
             <Whatshot />
             <span>Hot</span>
           </div>
-          <div className="filter-element-secondary hoverable">
+          <div className="filter-element-secondary hoverable" onClick={()=>this.clickOnBtn('new')}>
             <NewReleases />
             <span>New</span>
           </div>
-          <div className="filter-element-secondary hoverable">
+          <div className="filter-element-secondary hoverable" onClick={()=>this.clickOnBtn('top')}>
             <TrendingUp />
             <span>Top</span>
           </div>
@@ -143,15 +228,34 @@ class mainComponent extends Component {
             </Dropdown.Menu>
         </Dropdown>
       </div>
-        {this.state.currentView == 'card' &&
-          <PostsCardView dataFromParent = {this.state.posts}/>
-        }
-        {this.state.currentView == 'compact' &&
-          <PostsCompact dataFromParent = {this.state.posts} handler={this.handler}/>
-        }
-        {this.state.currentView == 'classic' &&
-          <PostsClassic dataFromParent = {this.state.posts} handler={this.handler}/>
-        }
+
+          <LoadingOverlay
+            active = {this.state.loading}
+            text='Loading your content...'
+            styles={{
+              spinner: (base) => ({
+                ...base,
+                color: 'red',
+                width: '100px',
+                background: 'rgba(255, 0, 0, 0.5)',
+                '& svg circle': {
+                  stroke: 'rgba(255, 0, 0, 0.5)'
+                }
+              })
+            }}
+            >
+               {this.state.currentView == 'card' &&
+                  <PostsCardView dataFromParent = {this.state.posts} upvote={this.upvote} downvote={this.downvote}/>
+                }
+                {this.state.currentView == 'compact' &&
+                  <PostsCompact dataFromParent = {this.state.posts} handler={this.handler} upvote={this.upvote} downvote={this.downvote}/>
+                }
+                {this.state.currentView == 'classic' &&
+                  <PostsClassic dataFromParent = {this.state.posts} handler={this.handler} upvote={this.upvote} downvote={this.downvote}/>
+                }
+
+          </LoadingOverlay>
+
 
         <div ref={loadingRef => (this.loadingRef = loadingRef)} style={loadingCSS}>
           <span style={loadingTextCSS} className="m-2 text-red">Loading...</span>
