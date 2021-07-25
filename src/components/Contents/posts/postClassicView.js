@@ -6,7 +6,6 @@ import "./posts.css";
 
 import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
-import Button from "../../buttons/buttons";
 
 import ModeCommentIcon from "@material-ui/icons/ModeComment";
 import ShareIcon from "@material-ui/icons/Share";
@@ -18,21 +17,31 @@ import moment from 'moment'
 import ReactHtmlParser from 'react-html-parser';
 
 
+
 class PostsClassic extends Component 
 {
     constructor(props) {
         super(props);
+        this.state = {
+          posts: props.dataFromParent
+        };
     }
-
+  componentWillReceiveProps(nextProps) {
+    if(nextProps)
+    {
+      this.setState({ posts: nextProps.dataFromParent });  
+    }
+  }
   render() {
     return (
+      
       <div className="posts-wrapper">
-        {this.props.dataFromParent.map((post, index) => (
+        {this.state.posts.map((post, index) => (
           <div className="post" key={index}>
             <div className="post-sidebar">
-              <ArrowUpwardIcon className="upvote" />
+              <ArrowUpwardIcon className="upvote" onClick={()=>this.props.upvote(post, index)}/>
               <span>{post.data.ups}</span>
-              <ArrowDownwardIcon className="downvote" />
+              <ArrowDownwardIcon className="downvote" onClick={()=>this.props.downvote(post, index)}/>
             </div>
             <div className="post-body">
               <a href={post.data.url} className="title">{post.data.title}</a>
