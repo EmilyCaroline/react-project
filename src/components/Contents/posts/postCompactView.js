@@ -21,15 +21,27 @@ import Row from 'react-bootstrap/Row';
 import CompareArrowsOutlinedIcon from '@material-ui/icons/CompareArrowsOutlined';
 class Posts extends Component 
 {
+    constructor(props) {
+        super(props);
+        this.state = {
+            posts: props.dataFromParent
+        };
+    }
+    componentWillReceiveProps(nextProps) {
+        if(nextProps)
+        {
+          this.setState({ posts: nextProps.dataFromParent });  
+        }
+      }
   render() {
     return (
         <div className="compact-view-wrapper">
-        {this.props.dataFromParent.map((post, index) => (
-        <Row className="compact-view-post">
+        {this.state.posts.map((post, index) => (
+        <Row className="compact-view-post" key={index}>
             <Col md={2} className="post-sidebar-compact">
-                <ArrowUpwardIcon />
+                <ArrowUpwardIcon onClick={()=>this.props.upvote(post, index)}/>
                 <span>{post.data.ups}</span>
-                <ArrowDownwardIcon/>
+                <ArrowDownwardIcon onClick={()=>this.props.downvote(post, index)}/>
             </Col>
             <Col md={8} style={{ padding:10}}>
                 <Row className="no-gutters">
