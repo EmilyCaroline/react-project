@@ -19,15 +19,27 @@ import moment from 'moment'
 
 class Posts extends Component 
 {
+  constructor(props) {
+      super(props);
+      this.state = {
+        posts: props.dataFromParent
+      };
+  }
+  componentWillReceiveProps(nextProps) {
+    if(nextProps)
+    {
+      this.setState({ posts: nextProps.dataFromParent });  
+    }
+  }
   render() {
     return (
       <div className="posts-wrapper">
-        {this.props.dataFromParent.map((post, index) => (
+        {this.state.posts.map((post, index) => (
           <div className="post" key={index}>
             <div className="post-sidebar">
-              <ArrowUpwardIcon className="upvote" />
+              <ArrowUpwardIcon className="upvote" onClick={()=>this.props.upvote(post, index)}/>
               <span>{post.data.ups}</span>
-              <ArrowDownwardIcon className="downvote" />
+              <ArrowDownwardIcon className="downvote" onClick={()=>this.props.downvote(post, index)}/>
             </div>
             <div className="post-title">
               <img src="./subreddit.jpg" />
